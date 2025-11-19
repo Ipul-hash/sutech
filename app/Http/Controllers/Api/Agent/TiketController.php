@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Agent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-use App\Models\TicketNotes;
+use App\Models\TicketNote;
 use App\Models\User;
 use App\Models\TicketProgress;
 use Illuminate\Http\Request;
@@ -168,7 +168,7 @@ class TiketController extends Controller
             ], 422);
         }
 
-        $note = TicketNotes::create([
+        $note = TicketNote::create([
             'ticket_id' => $id,
             'created_by' => Auth::id(),
             'note' => $request->note
