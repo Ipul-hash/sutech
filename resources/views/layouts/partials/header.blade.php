@@ -1,4 +1,5 @@
 <header class="gradient-border p-6 flex justify-between items-center sticky top-0 z-10">
+
     <div>
         <h1 class="text-2xl font-bold">Hai, {{ auth()->user()->name ?? 'Saiful Rahman' }}</h1>
         <p class="text-slate-400 text-sm">Selamat datang kembali di dashboard Helpdesk</p>

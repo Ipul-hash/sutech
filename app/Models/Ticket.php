@@ -11,8 +11,8 @@ class Ticket extends Model
 
     protected $fillable = [
         'user_id', 'assigned_to', 'category', 'priority',
-        'location', 'title', 'description', 'root_cause',
-        'status', 'sla_deadline', 'escalated_to', 'closed_at'
+        'room_id', 'title', 'description', 'root_cause',
+        'assigned_team_id','status', 'sla_deadline', 'escalated_to', 'closed_at'
     ];
 
     protected $dates = ['sla_deadline', 'closed_at'];
@@ -55,9 +55,16 @@ class Ticket extends Model
         return $this->hasMany(TicketHistory::class);
     }
 
-    // Relasi ke agent yang menangani tiket (assigned_to)
-public function agent()
-{
-    return $this->belongsTo(User::class, 'assigned_to');
-}
+        // Relasi ke agent yang menangani tiket (assigned_to)
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+
 }

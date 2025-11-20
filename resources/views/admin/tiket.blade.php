@@ -1,7 +1,5 @@
 @extends('layouts.app')
-
 @section('title', 'Manajemen Tiket - Helpdesk')
-
 @section('content')
 <div class="p-6 space-y-6">
     <!-- Header Section -->
@@ -18,7 +16,6 @@
             <span class="font-medium">Buat Tiket Baru</span>
         </button>
     </div>
-
     <!-- Stats -->
     <div class="gradient-border rounded-2xl p-6">
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -69,7 +66,6 @@
             </div>
         </div>
     </div>
-
     <!-- Tickets Table -->
     <div class="gradient-border rounded-2xl overflow-hidden">
         <div class="p-4 bg-slate-800/30 border-b border-slate-800 flex items-center justify-between">
@@ -151,7 +147,6 @@
                     </div>
                     <input type="hidden" name="user_id" id="selectedUserId" required>
                 </div>
-
                 <!-- Role (dari user) -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -159,21 +154,16 @@
                     </label>
                     <input type="text" id="selectedUserRole" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-500 cursor-not-allowed" disabled placeholder="Role akan muncul setelah memilih user">
                 </div>
-
-                <!-- Lokasi -->
+                <!-- Ruangan -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
-                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>Lokasi <span class="text-red-500">*</span>
+                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>Ruangan <span class="text-red-500">*</span>
                     </label>
-                    <select name="location" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required>
-                        <option value="">Pilih lokasi...</option>
-                        <option value="igd">🚨 IGD</option>
-                        <option value="farmasi">💊 Farmasi</option>
-                        <option value="it">💻 IT</option>
-                        <option value="umum">🏡 Umum</option>
+                    <select name="room_id" id="roomSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required>
+                        <option value="">Pilih ruangan...</option>
+                        <!-- Diisi via JS -->
                     </select>
                 </div>
-
                 <!-- Judul -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -181,7 +171,6 @@
                     </label>
                     <input type="text" name="title" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required minlength="5" placeholder="Masukkan judul tiket...">
                 </div>
-
                 <!-- Kategori -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -191,7 +180,6 @@
                         <option value="">Memuat kategori...</option>
                     </select>
                 </div>
-
                 <!-- Tim Tujuan -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -202,7 +190,6 @@
                         <!-- Diisi via /api/options → data.data.team -->
                     </select>
                 </div>
-
                 <!-- Prioritas -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -239,7 +226,6 @@
                         </label>
                     </div>
                 </div>
-
                 <!-- Deskripsi -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -247,7 +233,6 @@
                     </label>
                     <textarea name="description" rows="4" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required minlength="20" placeholder="Jelaskan detail masalah yang dialami..."></textarea>
                 </div>
-
                 <!-- Upload -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -386,16 +371,13 @@
         transform: scale(1) translateY(0);
     }
 }
-
 @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
 .animate-modal {
     animation: modal-in 0.3s ease-out;
 }
-
 .animate-fade-in {
     animation: fade-in 0.3s ease-out;
 }
@@ -410,6 +392,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const OPTIONS_API = '/api/options';
     let uploadedFiles = [];
     let currentTicketId = null;
+
+    // === TOAST NOTIFICATION ===
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 p-4 rounded-lg text-white font-medium shadow-lg z-50 animate-fade-in ${
+            type === 'success' 
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                : 'bg-gradient-to-r from-red-500 to-rose-600'
+        }`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} mr-2"></i>${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
 
     // === FETCH ALL ===
     async function fetchAll() {
@@ -440,13 +435,11 @@ document.addEventListener('DOMContentLoaded', function () {
             </td></tr>`;
             return;
         }
-
         tbody.innerHTML = tickets.map(t => {
             const createdAt = new Date(t.created_at);
             const now = new Date();
             const diffMin = Math.floor((now - createdAt) / 60000);
             let timeAgo = diffMin < 60 ? `${diffMin} menit` : diffMin < 1440 ? `${Math.floor(diffMin/60)} jam` : `${Math.floor(diffMin/1440)} hari`;
-
             let statusClass = '', statusText = t.status, statusIcon = '';
             if (t.status === 'open') { 
                 statusClass = 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30'; 
@@ -468,7 +461,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 statusText = 'Closed';
                 statusIcon = 'fa-times-circle';
             }
-
             return `
                 <tr class="hover:bg-slate-800/30 transition-colors">
                     <td class="px-6 py-4">
@@ -519,7 +511,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 </tr>
             `;
         }).join('');
-
         tbody.addEventListener('click', function(e) {
             const btn = e.target.closest('button[data-action]');
             if (!btn) return;
@@ -562,35 +553,36 @@ document.addEventListener('DOMContentLoaded', function () {
             `).join('');
         } catch (err) {
             console.error('Gagal muat users:', err);
-            alert('❌ Gagal memuat daftar user');
+            showToast('Gagal memuat daftar user', 'error');
         }
     }
 
-   // === OPTIONS (Kategori + Tim) ===
-async function fetchOptions() {
-    try {
-        const res = await fetch(OPTIONS_API);
-        const data = await res.json();
-        if (data.success) {
-            // Isi Kategori
-            const catSelect = document.getElementById('categorySelect');
-            catSelect.innerHTML = '<option value="">Pilih Kategori...</option>' + 
-                data.data.categories.map(c => 
-                    `<option value="${c.name}">${c.name}</option>`
-                ).join('');
+    // === OPTIONS (Kategori + Tim + Ruangan) ===
+    async function fetchOptions() {
+        try {
+            const res = await fetch(OPTIONS_API);
+            const data = await res.json();
+            if (data.success) {
+                // ✅ KATEGORI: ambil .name dari object
+                const catSelect = document.getElementById('categorySelect');
+                catSelect.innerHTML = '<option value="">Pilih Kategori...</option>' + 
+                    data.data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
 
-            // ✅ Isi Tim Tujuan
-            const teamSelect = document.getElementById('assignedTeamSelect');
-            teamSelect.innerHTML = '<option value="">Pilih tim yang akan menangani...</option>' + 
-                data.data.team.map(t => 
-                    `<option value="${t.id}">${t.name}</option>`
-                ).join('');
+                // ✅ TIM TUJUAN
+                const teamSelect = document.getElementById('assignedTeamSelect');
+                teamSelect.innerHTML = '<option value="">Pilih tim yang akan menangani...</option>' + 
+                    data.data.team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+                // ✅ RUANGAN
+                const roomSelect = document.getElementById('roomSelect');
+                roomSelect.innerHTML = '<option value="">Pilih ruangan...</option>' + 
+                    data.data.rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            }
+        } catch (err) {
+            console.error('Gagal muat opsi:', err);
+            showToast('Gagal memuat data', 'error');
         }
-    } catch (err) {
-        console.error('Gagal muat opsi:', err);
-        alert('❌ Gagal memuat daftar kategori & tim');
     }
-}
 
     // === MODALS ===
     const modal = document.getElementById('createTicketModal');
@@ -621,9 +613,6 @@ async function fetchOptions() {
     // === USER SEARCH ===
     const userSearch = document.getElementById('userSearch');
     const userDropdown = document.getElementById('userDropdown');
-    const selectedUserBox = document.getElementById('selectedUserBox');
-    const userSearchContainer = document.getElementById('userSearchContainer');
-
     userSearch.addEventListener('input', () => {
         const term = userSearch.value.toLowerCase();
         document.querySelectorAll('.user-item').forEach(item => {
@@ -634,27 +623,26 @@ async function fetchOptions() {
     });
 
     document.getElementById('userSearchContainer').addEventListener('click', function(e) {
-    const item = e.target.closest('.user-item');
-    if (!item) return;
-    const id = item.dataset.id;
-    const name = item.dataset.name;
-    const email = item.dataset.email;
-    const role = item.dataset.role; // ✅ pastikan ini "role", bukan "roles"
-    const initials = name.substring(0,2).toUpperCase();
-
-    document.getElementById('selectedUserId').value = id;
-    document.getElementById('selectedUserName').textContent = name;
-    document.getElementById('selectedUserEmail').textContent = email;
-    document.getElementById('selectedUserRole').value = role;
-    document.getElementById('selectedUserRoleBadge').innerHTML = `<i class="fas fa-id-badge mr-1"></i>${role}`; // ✅ role
-    document.getElementById('selectedUserAvatar').textContent = initials;
-    document.getElementById('selectedUserBox').classList.remove('hidden');
-    userSearch.value = '';
-    userDropdown.classList.add('hidden');
-});
+        const item = e.target.closest('.user-item');
+        if (!item) return;
+        const id = item.dataset.id;
+        const name = item.dataset.name;
+        const email = item.dataset.email;
+        const role = item.dataset.role;
+        const initials = name.substring(0,2).toUpperCase();
+        document.getElementById('selectedUserId').value = id;
+        document.getElementById('selectedUserName').textContent = name;
+        document.getElementById('selectedUserEmail').textContent = email;
+        document.getElementById('selectedUserRole').value = role;
+        document.getElementById('selectedUserRoleBadge').innerHTML = `<i class="fas fa-id-badge mr-1"></i>${role}`;
+        document.getElementById('selectedUserAvatar').textContent = initials;
+        document.getElementById('selectedUserBox').classList.remove('hidden');
+        userSearch.value = '';
+        userDropdown.classList.add('hidden');
+    });
 
     document.getElementById('clearUserBtn').addEventListener('click', () => {
-        selectedUserBox.classList.add('hidden');
+        document.getElementById('selectedUserBox').classList.add('hidden');
         document.getElementById('selectedUserId').value = '';
         document.getElementById('selectedUserRole').value = '';
     });
@@ -665,10 +653,12 @@ async function fetchOptions() {
     const filePreview = document.getElementById('filePreview');
 
     dropZone.addEventListener('click', () => fileInput.click());
+
     ['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, (ev) => {
         ev.preventDefault();
         dropZone.classList.add('border-blue-500','bg-blue-500/10');
     }));
+
     ['dragleave','drop'].forEach(e => dropZone.addEventListener(e, () => {
         dropZone.classList.remove('border-blue-500','bg-blue-500/10');
     }));
@@ -686,20 +676,17 @@ async function fetchOptions() {
     function handleFiles(files) {
         files.forEach(file => {
             if (file.size > 10 * 1024 * 1024) {
-                alert(`File ${file.name} terlalu besar! Maks 10MB.`);
+                showToast(`File ${file.name} terlalu besar! Maks 10MB.`, 'error');
                 return;
             }
             uploadedFiles.push(file);
             const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm hover:border-blue-500 transition-colors animate-fade-in';
-            
-            let icon = 'fa-file';
-            let iconColor = 'text-blue-500';
+            div.className = 'flex justify-between items-center p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm hover:border-blue-500 transition-colors';
+            let icon = 'fa-file', iconColor = 'text-blue-500';
             if (file.type.includes('image')) { icon = 'fa-file-image'; iconColor = 'text-green-500'; }
             else if (file.type.includes('pdf')) { icon = 'fa-file-pdf'; iconColor = 'text-red-500'; }
             else if (file.type.includes('word')) { icon = 'fa-file-word'; iconColor = 'text-blue-600'; }
-            else if (file.type.includes('excel') || file.type.includes('sheet')) { icon = 'fa-file-excel'; iconColor = 'text-green-600'; }
-            
+            else if (file.type.includes('excel')) { icon = 'fa-file-excel'; iconColor = 'text-green-600'; }
             div.innerHTML = `
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center">
@@ -710,7 +697,7 @@ async function fetchOptions() {
                         <p class="text-xs text-slate-400">${(file.size/1024).toFixed(1)} KB</p>
                     </div>
                 </div>
-                <button class="text-red-500 hover:text-red-400 remove-file p-2 hover:bg-red-500/10 rounded-lg transition-colors" data-name="${file.name}">
+                <button class="text-red-500 hover:text-red-400 remove-file p-2 hover:bg-red-500/10 rounded-lg" data-name="${file.name}">
                     <i class="fas fa-trash"></i>
                 </button>
             `;
@@ -728,33 +715,36 @@ async function fetchOptions() {
         }
     });
 
-    // === CREATE FORM SUBMIT ===
+    // === CREATE FORM SUBMIT (SUDAH INCLUDE assigned_team_id) ===
     document.getElementById('createTicketForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!document.getElementById('selectedUserId').value) {
-            alert('⚠️ Pilih pelapor terlebih dahulu!');
+            showToast('Pilih pelapor terlebih dahulu!', 'error');
             return;
         }
-
         const formData = new FormData(e.target);
         uploadedFiles.forEach((file, i) => {
             formData.append(`attachments[${i}]`, file);
         });
-
         try {
-            const res = await fetch(API_BASE, { method: 'POST', body: formData, headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')} });
+            const res = await fetch(API_BASE, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
             const result = await res.json();
             if (result.success) {
-                alert('✅ Tiket berhasil dibuat!');
+                showToast('Tiket berhasil dibuat!');
                 closeModal();
                 fetchTickets();
             } else {
-                alert('❌ Gagal: ' + (result.message || 'Error tidak diketahui'));
+                showToast(result.message || 'Gagal membuat tiket', 'error');
             }
         } catch (err) {
-            alert('❌ Error: ' + err.message);
+            showToast('Error: ' + err.message, 'error');
         }
     });
 
@@ -766,28 +756,24 @@ async function fetchOptions() {
             .then(data => {
                 if (data.success) {
                     const t = data.data;
-                    
                     const statusColors = {
                         open: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
                         in_progress: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
                         resolved: 'bg-green-500/20 text-green-500 border-green-500/30',
                         closed: 'bg-slate-500/20 text-slate-500 border-slate-500/30'
                     };
-                    
                     const priorityColors = {
                         low: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
                         medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
                         high: 'bg-orange-500/20 text-orange-500 border-orange-500/30',
                         critical: 'bg-red-500/20 text-red-500 border-red-500/30'
                     };
-
                     document.getElementById('detailTicketContent').innerHTML = `
                         <div class="space-y-4">
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-1">ID Tiket</p>
                                 <p class="text-lg font-mono font-bold text-blue-400">#TKT-${t.id}</p>
                             </div>
-                            
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Pelapor</p>
                                 <div class="flex items-center space-x-3">
@@ -800,28 +786,24 @@ async function fetchOptions() {
                                     </div>
                                 </div>
                             </div>
-
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Judul</p>
                                 <p class="font-semibold text-white">${t.title}</p>
                             </div>
-
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Deskripsi</p>
                                 <p class="text-sm text-slate-300 leading-relaxed">${t.description}</p>
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                     <p class="text-xs text-slate-400 mb-2">Kategori</p>
                                     <p class="font-medium text-white">${t.category}</p>
                                 </div>
                                 <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                    <p class="text-xs text-slate-400 mb-2">Lokasi</p>
-                                    <p class="font-medium text-white">${t.location}</p>
+                                    <p class="text-xs text-slate-400 mb-2">Ruangan</p>
+                                    <p class="font-medium text-white">${t.room?.name || '-'}</p>
                                 </div>
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                     <p class="text-xs text-slate-400 mb-2">Status</p>
@@ -836,7 +818,6 @@ async function fetchOptions() {
                                     </span>
                                 </div>
                             </div>
-
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Dibuat</p>
                                 <p class="text-sm text-white">
@@ -916,59 +897,55 @@ async function fetchOptions() {
             priority: document.getElementById('editPriority').value,
             description: document.getElementById('editDescription').value
         };
-
         try {
             const res = await fetch(`${API_BASE}/${currentTicketId}`, {
-    method: 'PUT',
-    headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    },
-    body: JSON.stringify(data)
-});
-
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(data)
+            });
             const result = await res.json();
             if (result.success) {
-                alert('✅ Tiket berhasil diperbarui!');
+                showToast('✅ Tiket berhasil diperbarui!');
                 document.getElementById('editTicketModal').classList.add('hidden');
                 document.getElementById('editTicketModal').classList.remove('flex');
                 fetchTickets();
             } else {
-                alert('❌ Gagal: ' + (result.message || 'Error tidak diketahui'));
+                showToast('❌ Gagal: ' + (result.message || 'Error tidak diketahui'), 'error');
             }
         } catch (err) {
-            alert('❌ Error: ' + err.message);
+            showToast('❌ Error: ' + err.message, 'error');
         }
     });
 
     // === DELETE CONFIRM ===
     document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-    try {
-        const res = await fetch(`${API_BASE}/${currentTicketId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute('content')
+        try {
+            const res = await fetch(`${API_BASE}/${currentTicketId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute('content')
+                }
+            });
+            const result = await res.json();
+            if (result.success) {
+                showToast('✅ Tiket berhasil dihapus!');
+                document.getElementById('deleteConfirmModal').classList.add('hidden');
+                document.getElementById('deleteConfirmModal').classList.remove('flex');
+                fetchTickets();
+            } else {
+                showToast('❌ Gagal: ' + (result.message || 'Error tidak diketahui'), 'error');
             }
-        });
-
-        const result = await res.json();
-
-        if (result.success) {
-            alert('✅ Tiket berhasil dihapus!');
-            document.getElementById('deleteConfirmModal').classList.add('hidden');
-            document.getElementById('deleteConfirmModal').classList.remove('flex');
-            fetchTickets();
-        } else {
-            alert('❌ Gagal: ' + (result.message || 'Error tidak diketahui'));
+        } catch (err) {
+            showToast('❌ Error: ' + err.message, 'error');
         }
-    } catch (err) {
-        alert('❌ Error: ' + err.message);
-    }
-});
+    });
 
     // === INIT ===
     fetchAll();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TicketCategory;
 use App\Models\Team;
 use App\Models\Position;
+use App\Models\Room;  // ⬅️ tambahkan ini
 use Spatie\Permission\Models\Role;
 
 class OptionController extends Controller
@@ -13,21 +14,28 @@ class OptionController extends Controller
     public function getOptions()
     {
         try {
-            // Ambil role dari Spatie (admin, agent, user, dst)
-            $roles = Role::select('id', 'name')->orderBy('name')->get();
+            // Roles
+            $roles = Role::select('id', 'name')
+                ->orderBy('name')
+                ->get();
 
-            // Ambil kategori tiket
+            // Kategori tiket
             $categories = TicketCategory::select('id', 'name', 'slug')
                 ->orderBy('name')
                 ->get();
 
-            // Ambil team (infra, simrs, jaringan, dll)
+            // Team (Infra, SIMRS, Jaringan, dll)
             $team = Team::select('id', 'name')
                 ->orderBy('name')
                 ->get();
 
-            // Ambil posisi (perawat, dokter, staff, dll)
+            // Jabatan / posisi
             $position = Position::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            // Ruangan Rumah Sakit
+            $rooms = Room::select('id', 'name')
                 ->orderBy('name')
                 ->get();
 
@@ -39,6 +47,7 @@ class OptionController extends Controller
                     'categories' => $categories,
                     'team'       => $team,
                     'position'   => $position,
+                    'rooms'      => $rooms,   // ⬅️ baru ditambahkan
                 ]
             ], 200);
 

@@ -55,3 +55,4 @@ Route::middleware(['auth:sanctum'])->prefix('agent')->group(function () {
     Route::post('/tickets/{id}/progress', [TiketController::class, 'addProgress']);
 });
 
+    Route::get('/options', [OptionController::class, 'getOptions']);

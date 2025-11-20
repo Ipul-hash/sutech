@@ -151,7 +151,6 @@
                         <i class="fas fa-tasks mr-2 text-blue-500"></i>Status
                     </label>
                     <select id="updateStatus" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required>
-                        <option value="open">Open</option>
                         <option value="in_progress">In Progress</option>
                         <option value="resolved">Resolved</option>
                         <option value="closed">Closed</option>
@@ -172,7 +171,7 @@
                     <label class="block text-sm font-medium text-slate-300 mb-2">
                         <i class="fas fa-comment mr-2 text-purple-500"></i>Catatan Internal (Opsional)
                     </label>
-                    <textarea id="internalNote" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="Tambahkan catatan untuk tim internal..."></textarea>
+                    <textarea id="internalNote" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="Tambahkan catatan..."></textarea>
                 </div>
             </form>
         </div>
@@ -181,11 +180,7 @@
                 <i class="fas fa-times mr-2"></i>Batal
             </button>
             <button type="submit" form="updateProgressForm" class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-blue-500/25">
-                <i class="fas fa-save mr-2"></i>Simpan Update
-            </button>
-            <!-- ✅ TOMBOL SELESAI -->
-            <button type="button" id="markAsResolvedBtn" class="px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-green-500/25">
-                <i class="fas fa-check mr-2"></i>Selesai
+                <i class="fas fa-save mr-2"></i>Simpan
             </button>
         </div>
     </div>
@@ -220,9 +215,16 @@
     </div>
 </div>
 
+<!-- Toast Notification -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+
 <style>
 @keyframes modal-in { from { opacity:0; transform:scale(0.95) translateY(-20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes slide-in { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 .animate-modal { animation: modal-in 0.3s ease-out; }
+.toast { animation: slide-in 0.3s ease-out; padding: 12px 16px; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-width: 280px; }
+.toast-success { background: linear-gradient(to right, #10b981, #059669); }
+.toast-error { background: linear-gradient(to right, #ef4444, #dc2626); }
 </style>
 
 @endsection
@@ -233,21 +235,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const API_URL = '/api/agent/tickets';
     const OPTIONS_API = '/api/options';
 
-    // === LOAD KATEGORI ===
-    async function loadCategories() {
-        try {
-            const res = await fetch(OPTIONS_API);
-            const result = await res.json();
-            if (result.success && result.data?.categories) {
-                let options = '<option value="">Semua</option>';
-                result.data.categories.forEach(cat => {
-                    options += `<option value="${cat.name}">${cat.name}</option>`;
-                });
-                document.getElementById('filterCategory').innerHTML = options;
-            }
-        } catch (err) {
-            console.error('Gagal muat kategori:', err);
-        }
+    // === TOAST NOTIFICATION ===
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} mr-2"></i>${message}`;
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
     }
 
     // === LOAD TIKET ===
@@ -263,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const res = await fetch(API_URL);
             const result = await res.json();
-
             if (result.success) {
                 renderTickets(result.data || []);
                 const stats = {
@@ -278,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(result.message || 'Gagal memuat data');
             }
         } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-12 text-center text-red-500">${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-12 text-center text-red-500">Gagal memuat tiket: ${err.message}</td></tr>`;
         }
     }
 
@@ -292,13 +285,6 @@ document.addEventListener('DOMContentLoaded', function () {
             </td></tr>`;
             return;
         }
-
-        const prioColors = {
-            low: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-            medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
-            high: 'bg-orange-500/20 text-orange-500 border-orange-500/30',
-            critical: 'bg-red-500/20 text-red-500 border-red-500/30'
-        };
 
         const statusColors = {
             open: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
@@ -362,7 +348,6 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         }).join('');
 
-        // Event delegation
         tbody.addEventListener('click', function(e) {
             const btn = e.target.closest('button[data-action]');
             if (!btn) return;
@@ -385,6 +370,72 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('stat-closed-agent').textContent = stats.closed || 0;
     }
 
+    // === AMBIL TIKET (UBAH JADI IN_PROGRESS) ===
+    async function takeTicket(id) {
+        if (!confirm('Ambil tiket ini?')) return;
+        try {
+            const res = await fetch(`${API_URL}/${id}/take`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            const result = await res.json();
+            if (result.success) {
+                showToast('Tiket berhasil diambil!');
+                loadTickets(); // ⬅️ Refresh tabel langsung
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+
+    // === UPDATE PROGRESS ===
+    async function updateProgress(ticketId, formData) {
+        try {
+            const res = await fetch(`${API_URL}/${ticketId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(formData)
+            });
+            const result = await res.json();
+            if (result.success) {
+                showToast('Progress berhasil diperbarui!');
+                loadTickets(); // ⬅️ Refresh tabel
+                document.getElementById('updateProgressModal').classList.add('hidden');
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+
+    // === MODAL: Update Progress ===
+    function openUpdateProgressModal(id) {
+        document.getElementById('ticketId').value = id;
+        document.getElementById('updateProgressModal').classList.remove('hidden');
+        document.getElementById('updateProgressModal').classList.add('flex');
+    }
+
+    // === MODAL: Pesan Internal ===
+    function openInternalMessageModal(id) {
+        document.getElementById('messageTicketId').value = id;
+        document.getElementById('messageThread').innerHTML = `<div class="text-center text-slate-500 py-6">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Memuat pesan...</p>
+        </div>`;
+        document.getElementById('internalMessageModal').classList.remove('hidden');
+        document.getElementById('internalMessageModal').classList.add('flex');
+    }
+
     // === MODAL: Detail ===
     async function openDetailModal(id) {
         try {
@@ -403,19 +454,19 @@ document.addEventListener('DOMContentLoaded', function () {
                             <p class="font-semibold text-white">${t.title}</p>
                             <p class="text-sm text-slate-300 mt-2">${t.description}</p>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                <p class="text-xs text-slate-400 mb-2">Status</p>
-                                <span class="inline-block px-3 py-1 ${t.status === 'open' ? 'bg-yellow-500/20 text-yellow-500' : t.status === 'in_progress' ? 'bg-blue-500/20 text-blue-500' : 'bg-green-500/20 text-green-500'} rounded text-xs font-medium capitalize">${t.status}</span>
-                            </div>
-                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                <p class="text-xs text-slate-400 mb-2">Prioritas</p>
-                                <span class="inline-block px-3 py-1 ${t.priority === 'critical' ? 'bg-red-500/20 text-red-500' : t.priority === 'high' ? 'bg-orange-500/20 text-orange-500' : 'bg-blue-500/20 text-blue-500'} rounded text-xs font-medium">${t.priority}</span>
-                            </div>
-                        </div>
                         <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                             <p class="text-xs text-slate-400 mb-2">Pelapor</p>
                             <p class="text-white">${t.user?.name || '-'}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <p class="text-xs text-slate-400 mb-2">Status</p>
+                                <span class="px-3 py-1 ${t.status === 'open' ? 'bg-yellow-500/20 text-yellow-500' : t.status === 'in_progress' ? 'bg-blue-500/20 text-blue-500' : 'bg-green-500/20 text-green-500'} rounded text-xs font-medium capitalize">${t.status}</span>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <p class="text-xs text-slate-400 mb-2">Prioritas</p>
+                                <span class="px-3 py-1 ${t.priority === 'critical' ? 'bg-red-500/20 text-red-500' : t.priority === 'high' ? 'bg-orange-500/20 text-orange-500' : 'bg-blue-500/20 text-blue-500'} rounded text-xs font-medium">${t.priority}</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -423,75 +474,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('detailTicketModal').classList.add('flex');
             }
         } catch (err) {
-            alert('Gagal muat detail: ' + err.message);
+            showToast('Gagal muat detail: ' + err.message, 'error');
         }
-    }
-
-    // === AMBIL TIKET ===
-    async function takeTicket(id) {
-        if (!confirm('Yakin ingin mengambil tiket ini?')) return;
-        try {
-            const res = await fetch(`${API_URL}/${id}/take`, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-            const result = await res.json();
-            if (result.success) {
-                alert('✅ Tiket berhasil diambil!');
-                loadTickets();
-            } else {
-                alert('❌ ' + result.message);
-            }
-        } catch (err) {
-            alert('❌ Error: ' + err.message);
-        }
-    }
-
-    // === MARK AS RESOLVED ===
-    async function markAsResolved(ticketId) {
-        if (!confirm('Yakin ingin menandai tiket ini sebagai "Selesai"?')) return;
-        try {
-            const res = await fetch(`${API_URL}/${ticketId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ status: 'resolved' })
-            });
-            const result = await res.json();
-            if (result.success) {
-                alert('✅ Tiket ditandai sebagai "Selesai"!');
-                loadTickets();
-                document.getElementById('updateProgressModal').classList.add('hidden');
-            } else {
-                alert('❌ Gagal: ' + result.message);
-            }
-        } catch (err) {
-            alert('❌ Error: ' + err.message);
-        }
-    }
-
-    // === MODAL: Update Progress ===
-    function openUpdateProgressModal(id) {
-        document.getElementById('ticketId').value = id;
-        document.getElementById('updateProgressModal').classList.remove('hidden');
-        document.getElementById('updateProgressModal').classList.add('flex');
-    }
-
-    // === MODAL: Pesan Internal ===
-    function openInternalMessageModal(id) {
-        document.getElementById('messageTicketId').value = id;
-        document.getElementById('messageThread').innerHTML = `<div class="text-center text-slate-500 py-6">
-            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-            <p>Memuat pesan internal...</p>
-        </div>`;
-        document.getElementById('internalMessageModal').classList.remove('hidden');
-        document.getElementById('internalMessageModal').classList.add('flex');
     }
 
     // === TUTUP MODAL ===
@@ -503,36 +487,32 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // === SUBMIT: Update Progress (Catatan Internal) ===
+    // === SUBMIT: Update Progress ===
     document.getElementById('updateProgressForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const ticketId = document.getElementById('ticketId').value;
+        const status = document.getElementById('updateStatus').value;
+        const priority = document.getElementById('updatePriority').value;
         const note = document.getElementById('internalNote').value.trim();
 
-        if (!note) {
-            alert('Masukkan catatan terlebih dahulu!');
-            return;
-        }
+        // Update ticket
+        await updateProgress(ticketId, { status, priority });
 
-        try {
-            const res = await fetch(`${API_URL}/${ticketId}/notes`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ note })
-            });
-            const result = await res.json();
-            if (result.success) {
-                alert('✅ Catatan berhasil ditambahkan!');
-                document.getElementById('internalNote').value = '';
-            } else {
-                alert('❌ Gagal: ' + result.message);
+        // Kirim catatan jika ada
+        if (note) {
+            try {
+                await fetch(`${API_URL}/${ticketId}/notes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ note })
+                });
+            } catch (err) {
+                console.warn('Gagal kirim catatan:', err);
             }
-        } catch (err) {
-            alert('❌ Error: ' + err.message);
         }
     });
 
@@ -541,7 +521,6 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         const ticketId = document.getElementById('messageTicketId').value;
         const message = document.getElementById('messageContent').value.trim();
-
         if (!message) return;
 
         try {
@@ -557,23 +536,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await res.json();
             if (result.success) {
                 document.getElementById('messageContent').value = '';
-                // Reload pesan (bisa diimplementasi lebih lanjut)
+                showToast('Pesan terkirim!');
             } else {
-                alert('❌ Gagal kirim pesan: ' + result.message);
+                showToast(result.message, 'error');
             }
         } catch (err) {
-            alert('❌ Error: ' + err.message);
+            showToast('Gagal kirim pesan: ' + err.message, 'error');
         }
     });
 
-    // === TOMBOL SELESAI ===
-    document.getElementById('markAsResolvedBtn')?.addEventListener('click', () => {
-        const ticketId = document.getElementById('ticketId').value;
-        markAsResolved(ticketId);
-    });
-
     // === INIT ===
-    loadCategories();
     loadTickets();
 });
 </script>
