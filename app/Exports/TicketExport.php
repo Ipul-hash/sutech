@@ -30,7 +30,7 @@ class TicketExport implements FromArray, WithHeadings
             'user_id',
             'category',
             'priority',
-            'location',
+            'room_id',
             'title',
             'status',
             'created_at',

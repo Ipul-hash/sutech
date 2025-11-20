@@ -11,7 +11,7 @@ class Ticket extends Model
 
     protected $fillable = [
         'user_id', 'assigned_to', 'category', 'priority',
-        'room_id', 'title', 'description', 'root_cause',
+        'room_id', 'position_id', 'title', 'description', 'root_cause',
         'assigned_team_id','status', 'sla_deadline', 'escalated_to', 'closed_at'
     ];
 
@@ -64,6 +64,11 @@ class Ticket extends Model
     public function room()
     {
         return $this->belongsTo(Room::class);
+    }
+    
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
     }
 
 

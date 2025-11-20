@@ -147,13 +147,15 @@
                     </div>
                     <input type="hidden" name="user_id" id="selectedUserId" required>
                 </div>
-                <!-- Role (dari user) -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
-                        <i class="fas fa-id-badge mr-2 text-purple-500"></i>Role
-                    </label>
-                    <input type="text" id="selectedUserRole" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-500 cursor-not-allowed" disabled placeholder="Role akan muncul setelah memilih user">
-                </div>
+                <!-- Posisi -->
+<div>
+    <label class="block text-sm font-medium text-slate-300 mb-2">
+        <i class="fas fa-id-badge mr-2 text-purple-500"></i>Sebagai
+    </label>
+    <input type="text" id="selectedUserPosition" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-500 cursor-not-allowed" disabled placeholder="Posisi akan muncul setelah memilih user">
+</div>
+<!-- ✅ Hidden input untuk kirim ke API -->
+<input type="hidden" name="position_id" id="selectedUserPositionId">
                 <!-- Ruangan -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
@@ -320,6 +322,16 @@
                         <option value="critical">Critical</option>
                     </select>
                 </div>
+                <!-- Tim Tujuan (di dalam form #editTicketForm) -->
+<div>
+    <label class="block text-sm font-medium text-slate-300 mb-2">
+        <i class="fas fa-users mr-2 text-purple-500"></i>Tim Tujuan <span class="text-red-500">*</span>
+    </label>
+    <select name="assigned_team_id" id="editAssignedTeamSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required>
+        <option value="">Memuat tim...</option>
+    </select>
+</div>
+
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">
                         <i class="fas fa-align-left mr-2 text-yellow-500"></i>Deskripsi
@@ -531,31 +543,36 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // === USERS ===
-    async function fetchUsers() {
-        try {
-            const res = await fetch(USERS_API);
-            const result = await res.json();
-            const users = result.success ? result.data : [];
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.innerHTML = users.map(u => `
-                <div class="p-3 hover:bg-slate-700 cursor-pointer transition-colors user-item border-b border-slate-700/50 last:border-0" data-id="${u.id}" data-name="${u.name}" data-email="${u.email}" data-role="${u.role}">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">
-                            ${(u.name.substring(0,2) || '??').toUpperCase()}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold truncate text-white">${u.name}</p>
-                            <p class="text-xs text-slate-400 truncate">${u.email}</p>
-                            <span class="inline-block mt-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded">${u.role}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        } catch (err) {
-            console.error('Gagal muat users:', err);
-            showToast('Gagal memuat daftar user', 'error');
+            async function fetchUsers() {
+            try {
+                const res = await fetch(USERS_API);
+                const result = await res.json();
+                const users = result.success ? result.data : [];
+                const dropdown = document.getElementById('userDropdown');
+                dropdown.innerHTML = users.map(u => `
+    <div class="p-3 hover:bg-slate-700 cursor-pointer transition-colors user-item border-b border-slate-700/50 last:border-0" 
+        data-id="${u.id}" 
+        data-name="${u.name}" 
+        data-email="${u.email}" 
+        data-position="${u.position?.name || '–'}"
+        data-position-id="${u.position?.id || ''}"> <!-- ✅ Tambahkan ini -->
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">
+                ${(u.name.substring(0,2) || '??').toUpperCase()}
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold truncate text-white">${u.name}</p>
+                <p class="text-xs text-slate-400 truncate">${u.email}</p>
+                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded">${u.position?.name || '–'}</span>
+            </div>
+        </div>
+    </div>
+`).join('');
+            } catch (err) {
+                console.error('Gagal muat users:', err);
+                showToast('Gagal memuat daftar user', 'error');
+            }
         }
-    }
 
     // === OPTIONS (Kategori + Tim + Ruangan) ===
     async function fetchOptions() {
@@ -577,7 +594,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const roomSelect = document.getElementById('roomSelect');
                 roomSelect.innerHTML = '<option value="">Pilih ruangan...</option>' + 
                     data.data.rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            }
+
+                
+            }   
         } catch (err) {
             console.error('Gagal muat opsi:', err);
             showToast('Gagal memuat data', 'error');
@@ -633,18 +652,24 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('selectedUserId').value = id;
         document.getElementById('selectedUserName').textContent = name;
         document.getElementById('selectedUserEmail').textContent = email;
-        document.getElementById('selectedUserRole').value = role;
-        document.getElementById('selectedUserRoleBadge').innerHTML = `<i class="fas fa-id-badge mr-1"></i>${role}`;
+        // Ambil posisi dari user yang dipilih (asumsi: user.item punya `position_id` atau relasi `position`)
+        // Ambil posisi dari user yang dipilih
+const positionName = item.dataset.position || '–';
+const positionId = item.dataset.positionId || ''; // ✅ Ambil ID
+
+document.getElementById('selectedUserPosition').value = positionName;
+document.getElementById('selectedUserPositionId').value = positionId; // ✅ Set ID
+        document.getElementById('selectedUserRoleBadge').innerHTML = `<i class="fas fa-id-badge mr-1"></i>${positionName}`;
         document.getElementById('selectedUserAvatar').textContent = initials;
         document.getElementById('selectedUserBox').classList.remove('hidden');
         userSearch.value = '';
         userDropdown.classList.add('hidden');
     });
 
-    document.getElementById('clearUserBtn').addEventListener('click', () => {
+        document.getElementById('clearUserBtn').addEventListener('click', () => {
         document.getElementById('selectedUserBox').classList.add('hidden');
         document.getElementById('selectedUserId').value = '';
-        document.getElementById('selectedUserRole').value = '';
+        document.getElementById('selectedUserPosition').value = '';
     });
 
     // === FILE UPLOAD ===
@@ -782,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </div>
                                     <div>
                                         <p class="font-semibold text-white">${t.user?.name || 'N/A'}</p>
-                                        <p class="text-sm text-slate-400">${t.user?.email || ''}</p>
+                                        <p class="text-sm text-slate-400">${t.position?.name || '-'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -841,24 +866,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // === EDIT MODAL ===
-    function openEditModal(id) {
-        currentTicketId = id;
-        fetch(`${API_BASE}/${id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const t = data.data;
+function openEditModal(id) {
+    currentTicketId = id;
+    fetch(`${API_BASE}/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const t = data.data;
                     document.getElementById('editTicketId').value = t.id;
                     document.getElementById('editTitle').value = t.title;
                     document.getElementById('editStatus').value = t.status;
                     document.getElementById('editPriority').value = t.priority;
                     document.getElementById('editDescription').value = t.description;
+                    document.getElementById('editDescription').value = t.description;
                     document.getElementById('editTicketModal').classList.remove('hidden');
                     document.getElementById('editTicketModal').classList.add('flex');
-                }
-            })
-            .catch(err => alert('Gagal muat data edit: ' + err.message));
-    }
+
+                    fetch(OPTIONS_API)
+                    .then(res => res.json())
+                    .then(options => {
+                        const teamSelect = document.getElementById('editAssignedTeamSelect');
+                        teamSelect.innerHTML = '<option value="">Pilih tim...</option>' + 
+                            options.data.team.map(team => 
+                                `<option value="${team.id}" ${team.id == t.assigned_team_id ? 'selected' : ''}>${team.name}</option>`
+                            ).join('');
+                        document.getElementById('editTicketModal').classList.remove('hidden');
+                        document.getElementById('editTicketModal').classList.add('flex');
+                    });
+            }
+        })
+        .catch(err => showToast('Gagal muat data edit: ' + err.message, 'error'));
+}
 
     // === DELETE MODAL ===
     function openDeleteConfirm(id) {

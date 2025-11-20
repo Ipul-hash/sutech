@@ -4,15 +4,20 @@
 <div class="p-6 space-y-6">
 
     <!-- Header Section -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold flex items-center">
-                <i class="fas fa-ticket-alt mr-3 text-blue-500"></i>
-                Manajemen Tiket Agent
-            </h1>
-            <p class="text-slate-400 text-sm mt-1">Kelola tiket yang ditugaskan ke tim Anda</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-ticket-alt mr-3 text-blue-500"></i>
+                    Manajemen Tiket Agent
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Kelola tiket yang ditugaskan ke tim Anda</p>
+            </div>
+            <!-- Tambahkan tombol ini -->
+            <button id="openCreateModalBtn" class="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">
+                <i class="fas fa-plus"></i>
+                <span class="font-medium">Buat Tiket</span>
+            </button>
         </div>
-    </div>
 
     <!-- Stats Cards -->
     <div class="gradient-border rounded-2xl p-6">
@@ -215,6 +220,114 @@
     </div>
 </div>
 
+<!-- Modal Create Ticket -->
+<div id="createTicketModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-2xl max-h-[90vh] overflow-hidden animate-modal">
+        <div class="p-6 flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-slate-800 to-slate-900">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-plus-circle mr-3 text-blue-500"></i>
+                Buat Tiket Baru
+            </h2>
+            <button id="closeCreateModalBtn" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                <i class="fas fa-times text-slate-400 hover:text-white"></i>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 180px);">
+            <form id="createTicketForm" class="space-y-6">
+                <!-- Ruangan -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>Ruangan <span class="text-red-500">*</span>
+                    </label>
+                    <select name="room_id" id="roomSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required>
+                        <option value="">Pilih ruangan...</option>
+                    </select>
+                </div>
+                <!-- Judul -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <i class="fas fa-heading mr-2 text-cyan-500"></i>Judul <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required minlength="5" placeholder="Masukkan judul tiket...">
+                </div>
+                <!-- Kategori -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <i class="fas fa-tag mr-2 text-green-500"></i>Kategori <span class="text-red-500">*</span>
+                    </label>
+                    <select name="category" id="categorySelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required>
+                        <option value="">Pilih Kategori...</option>
+                    </select>
+                </div>
+                <!-- Prioritas -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <i class="fas fa-exclamation-circle mr-2 text-orange-500"></i>Prioritas <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="cursor-pointer block group">
+                            <input type="radio" name="priority" value="critical" class="sr-only peer" required>
+                            <div class="p-4 text-center bg-slate-800 border-2 border-slate-700 rounded-xl peer-checked:border-red-500 peer-checked:bg-red-500/10 hover:border-red-500/50 transition-all group-hover:scale-105">
+                                <i class="fas fa-fire text-red-500 text-2xl mb-2 block"></i>
+                                <p class="text-xs font-medium">Critical</p>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer block group">
+                            <input type="radio" name="priority" value="high" class="sr-only peer">
+                            <div class="p-4 text-center bg-slate-800 border-2 border-slate-700 rounded-xl peer-checked:border-orange-500 peer-checked:bg-orange-500/10 hover:border-orange-500/50 transition-all group-hover:scale-105">
+                                <i class="fas fa-arrow-up text-orange-500 text-2xl mb-2 block"></i>
+                                <p class="text-xs font-medium">High</p>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer block group">
+                            <input type="radio" name="priority" value="medium" class="sr-only peer">
+                            <div class="p-4 text-center bg-slate-800 border-2 border-slate-700 rounded-xl peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 hover:border-yellow-500/50 transition-all group-hover:scale-105">
+                                <i class="fas fa-minus text-yellow-500 text-2xl mb-2 block"></i>
+                                <p class="text-xs font-medium">Medium</p>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer block group">
+                            <input type="radio" name="priority" value="low" class="sr-only peer">
+                            <div class="p-4 text-center bg-slate-800 border-2 border-slate-700 rounded-xl peer-checked:border-blue-500 peer-checked:bg-blue-500/10 hover:border-blue-500/50 transition-all group-hover:scale-105">
+                                <i class="fas fa-arrow-down text-blue-500 text-2xl mb-2 block"></i>
+                                <p class="text-xs font-medium">Low</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <!-- Deskripsi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <i class="fas fa-align-left mr-2 text-yellow-500"></i>Deskripsi <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="description" rows="4" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required minlength="20" placeholder="Jelaskan detail masalah..."></textarea>
+                </div>
+                <!-- Upload -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <i class="fas fa-paperclip mr-2 text-slate-400"></i>Lampiran (Opsional)
+                    </label>
+                    <div id="dropZone" class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-500/5 cursor-pointer transition-all group">
+                        <i class="fas fa-cloud-upload-alt text-blue-500 text-4xl mb-3 block group-hover:scale-110 transition-transform"></i>
+                        <p class="text-sm font-medium mb-1 text-white">Klik atau seret file ke sini</p>
+                        <p class="text-xs text-slate-400">Maksimal 10MB per file • Mendukung gambar, PDF, dan dokumen</p>
+                        <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+                    </div>
+                    <div id="filePreview" class="mt-3 space-y-2 hidden"></div>
+                </div>
+            </form>
+        </div>
+        <div class="p-6 bg-slate-800/30 border-t border-slate-800 flex justify-end space-x-3">
+            <button type="button" id="cancelCreateBtn" class="px-5 py-2.5 text-sm font-medium rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors">
+                <i class="fas fa-times mr-2"></i>Batal
+            </button>
+            <button type="submit" form="createTicketForm" class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-blue-500/25">
+                <i class="fas fa-paper-plane mr-2"></i>Buat Tiket
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Notification -->
 <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
 
@@ -228,6 +341,7 @@
 </style>
 
 @endsection
+
 
 @push('scripts')
 <script>
@@ -243,6 +357,232 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('toastContainer').appendChild(toast);
         setTimeout(() => toast.remove(), 4000);
     }
+
+    // === CREATE TICKET MODAL ===
+    const createModal = document.getElementById('createTicketModal');
+    document.getElementById('openCreateModalBtn')?.addEventListener('click', () => {
+        createModal.classList.remove('hidden');
+        createModal.classList.add('flex');
+        // Load options saat buka modal
+        fetchOptions();
+    });
+
+    ['closeCreateModalBtn', 'cancelCreateBtn'].forEach(id => {
+        document.getElementById(id)?.addEventListener('click', () => {
+            createModal.classList.add('hidden');
+            createModal.classList.remove('flex');
+        });
+    });
+
+    // === LOAD OPTIONS (ROOMS, CATEGORIES) ===
+    async function fetchOptions() {
+        try {
+            const res = await fetch(OPTIONS_API);
+            const data = await res.json();
+            if (data.success) {
+                // Ruangan
+                const roomSelect = document.getElementById('roomSelect');
+                if (roomSelect) {
+                    roomSelect.innerHTML = '<option value="">Pilih ruangan...</option>' + 
+                        data.data.rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                }
+                // Kategori
+                const catSelect = document.getElementById('categorySelect');
+                if (catSelect) {
+                    catSelect.innerHTML = '<option value="">Pilih Kategori...</option>' + 
+                        data.data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                }
+            }
+        } catch (err) {
+            console.error('Gagal muat opsi:', err);
+            showToast('Gagal memuat data', 'error');
+        }
+    }
+
+    // === FILE UPLOAD ===
+    let uploadedFiles = [];
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const filePreview = document.getElementById('filePreview');
+
+    if (dropZone) {
+        dropZone.addEventListener('click', () => fileInput?.click());
+        ['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, (ev) => {
+            ev.preventDefault();
+            dropZone.classList.add('border-blue-500','bg-blue-500/10');
+        }));
+        ['dragleave','drop'].forEach(e => dropZone.addEventListener(e, () => {
+            dropZone.classList.remove('border-blue-500','bg-blue-500/10');
+        }));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFiles(Array.from(e.dataTransfer.files));
+            }
+        });
+        fileInput?.addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+    }
+
+    function handleFiles(files) {
+        files.forEach(file => {
+            if (file.size > 10 * 1024 * 1024) {
+                showToast(`File ${file.name} terlalu besar! Maks 10MB.`, 'error');
+                return;
+            }
+            uploadedFiles.push(file);
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm hover:border-blue-500 transition-colors';
+            let icon = 'fa-file', iconColor = 'text-blue-500';
+            if (file.type.includes('image')) { icon = 'fa-file-image'; iconColor = 'text-green-500'; }
+            else if (file.type.includes('pdf')) { icon = 'fa-file-pdf'; iconColor = 'text-red-500'; }
+            else if (file.type.includes('word')) { icon = 'fa-file-word'; iconColor = 'text-blue-600'; }
+            else if (file.type.includes('excel')) { icon = 'fa-file-excel'; iconColor = 'text-green-600'; }
+            div.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center">
+                        <i class="fas ${icon} ${iconColor} text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium truncate text-white">${file.name}</p>
+                        <p class="text-xs text-slate-400">${(file.size/1024).toFixed(1)} KB</p>
+                    </div>
+                </div>
+                <button class="text-red-500 hover:text-red-400 remove-file p-2 hover:bg-red-500/10 rounded-lg" data-name="${file.name}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            filePreview?.appendChild(div);
+        });
+        if (uploadedFiles.length > 0) filePreview?.classList.remove('hidden');
+    }
+
+    filePreview?.addEventListener('click', e => {
+        if (e.target.closest('.remove-file')) {
+            const name = e.target.closest('.remove-file').dataset.name;
+            uploadedFiles = uploadedFiles.filter(f => f.name !== name);
+            e.target.closest('div.flex').remove();
+            if (uploadedFiles.length === 0) filePreview?.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('createTicketForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        uploadedFiles.forEach((file, i) => {
+            formData.append(`attachments[${i}]`, file);
+        });
+
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            const result = await res.json();
+            if (result.success) {
+                showToast('Tiket berhasil dibuat!');
+                createModal.classList.add('hidden');
+                loadTickets();
+                // Reset form
+                e.target.reset();
+                uploadedFiles = [];
+                filePreview.innerHTML = '';
+                filePreview.classList.add('hidden');
+            } else {
+                showToast(result.message || 'Gagal membuat tiket', 'error');
+            }
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    });
+
+    // === MODAL: Detail (Perbarui untuk tampilkan position & ruangan) ===
+    async function openDetailModal(id) {
+        try {
+            const res = await fetch(`${API_URL}/${id}`);
+            const result = await res.json();
+            if (result.success) {
+                const t = result.data;
+                const statusColors = {
+                    open: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+                    in_progress: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+                    resolved: 'bg-green-500/20 text-green-500 border-green-500/30',
+                    closed: 'bg-slate-500/20 text-slate-500 border-slate-500/30'
+                };
+                const priorityColors = {
+                    low: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+                    medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+                    high: 'bg-orange-500/20 text-orange-500 border-orange-500/30',
+                    critical: 'bg-red-500/20 text-red-500 border-red-500/30'
+                };
+
+                document.getElementById('detailTicketContent').innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-1">ID Tiket</p>
+                            <p class="text-lg font-mono font-bold text-blue-400">#TKT-${t.id}</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">Pelapor</p>
+                            <p class="font-semibold text-white">${t.user?.name || '-'}</p>
+                        </div>
+                        <!-- ✅ TAMPILKAN POSITION -->
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">Sebagai</p>
+                            <p class="font-medium text-white">${t.position?.name || '-'}</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">Judul</p>
+                            <p class="font-semibold text-white">${t.title}</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">Deskripsi</p>
+                            <p class="text-sm text-slate-300">${t.description}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <p class="text-xs text-slate-400 mb-2">Kategori</p>
+                                <p class="font-medium text-white">${t.category}</p>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <p class="text-xs text-slate-400 mb-2">Ruangan</p>
+                                <p class="font-medium text-white">${t.room?.name || '-'}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <p class="text-xs text-slate-400 mb-2">Status</p>
+                                <span class="inline-flex items-center px-3 py-1 ${statusColors[t.status]} border rounded-full text-xs font-semibold capitalize">
+                                    ${t.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <p class="text-xs text-slate-400 mb-2">Prioritas</p>
+                                <span class="inline-flex items-center px-3 py-1 ${priorityColors[t.priority]} border rounded-full text-xs font-semibold capitalize">
+                                    ${t.priority}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">Dibuat</p>
+                            <p class="text-sm text-white">
+                                <i class="far fa-calendar-alt mr-2"></i>${new Date(t.created_at).toLocaleString('id-ID')}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('detailTicketModal').classList.remove('hidden');
+                document.getElementById('detailTicketModal').classList.add('flex');
+            }
+        } catch (err) {
+            showToast('Gagal muat detail: ' + err.message, 'error');
+        }
+    }
+
 
     // === LOAD TIKET ===
     async function loadTickets() {

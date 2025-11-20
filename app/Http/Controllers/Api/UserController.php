@@ -12,12 +12,12 @@ class UserController extends Controller
 {
     public function index()
 {
-    $users = User::with('roles')->get()->map(function ($user) {
+    $users = User::with('position')->get()->map(function ($user) {
         return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->roles->first()?->name ?? 'user',
+            'position' => $user->position,
             'status' => $user->active ? 'active' : 'inactive',
             'created_at' => $user->created_at->format('d M Y'),
             'created_ago' => $user->created_at->diffForHumans(),

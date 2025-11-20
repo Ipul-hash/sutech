@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Ai\AiAnalysisController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\Agent\TiketController; 
 use App\Http\Controllers\Api\Agent\DashboardAdminController; 
+use App\Http\Controllers\Api\User\UserTicketController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('users', UserController::class);
     Route::get('/roles', [UserController::class, 'getRoles']);
 
+    Route::get('/user/my-tickets', [UserTicketController::class, 'index']);
+    Route::post('/user/tickets', [UserTicketController::class, 'store']);
+    Route::get('/user/my-tickets/{id}', [UserTicketController::class, 'show']);
+    
     Route::get('/teknik-get', [TeknikTicketController::class, 'index']);
     Route::get('/teknik-get/{id}', [TeknikTicketController::class, 'show']);
     Route::post('/teknik-get', [TeknikTicketController::class, 'store']);
@@ -32,10 +37,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/trend', [DashboardController::class, 'trend']);
 
-    Route::post('/ai-chat', [ChattController::class, 'chat']);
-    Route::get('/ai/export-excel', [ExportController::class, 'export']);
-    Route::get('/ai/analisis-user', [AiAnalysisController::class, 'user']);
-    Route::get('/ai/analisis-tiket', [AiAnalysisController::class, 'tiket']);
+    
 });
 
 Route::get('/user', function (Request $request) {
@@ -45,9 +47,11 @@ Route::get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum'])->prefix('agent')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardAdminController::class, 'index']);
+    Route::get('/options', [OptionController::class, 'getOptions']);
 
-    // Tiket CRUD (ambil, update, notes, progress)
+    // Tiket CRUD
     Route::get('/tickets', [TiketController::class, 'index']);
+    Route::post('/tickets', [TiketController::class, 'store']); // ✅ TAMBAHKAN INI
     Route::get('/tickets/{id}', [TiketController::class, 'show']);
     Route::post('/tickets/{id}/take', [TiketController::class, 'takeTicket']);
     Route::put('/tickets/{id}', [TiketController::class, 'update']);
@@ -56,3 +60,8 @@ Route::middleware(['auth:sanctum'])->prefix('agent')->group(function () {
 });
 
     Route::get('/options', [OptionController::class, 'getOptions']);
+
+Route::post('/ai-chat', [ChattController::class, 'chat']);
+    Route::get('/ai/export-excel', [ExportController::class, 'export']);
+    Route::get('/ai/analisis-user', [AiAnalysisController::class, 'user']);
+    Route::get('/ai/analisis-tiket', [AiAnalysisController::class, 'tiket']);

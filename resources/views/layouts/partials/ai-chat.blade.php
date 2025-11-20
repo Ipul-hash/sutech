@@ -129,13 +129,17 @@ async function sendAIMessage() {
 
     addAIMessage("⏳ Sedang mengetik...");
 
-    let response = await fetch("/api/ai-chat", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ message: msg })
-    });
+    let token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+let response = await fetch("/api/ai-chat", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": token
+    },
+    body: JSON.stringify({ message: msg })
+});
+
 
     let data = await response.json();
 

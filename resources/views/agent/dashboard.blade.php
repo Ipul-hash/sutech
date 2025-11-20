@@ -564,7 +564,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="grid grid-cols-2 gap-4">
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Kategori</p>
-                                <p class="font-medium text-white">${t.category}</p>
+                                <p class="font-medium text-white">Nanti di isi oleh team ya...</p>
                             </div>
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Lokasi</p>
