@@ -207,41 +207,53 @@ document.addEventListener('DOMContentLoaded', function () {
     const teamSelect = document.getElementById('userTeam');
     const posSelect = document.getElementById('userPosition');
 
+    // Filter elements
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const statsCards = document.querySelectorAll('[data-filter]');
+
+    // Stats counters
+    const totalUsersEl = document.getElementById('totalUsers');
+    const totalAdminEl = document.getElementById('totalAdmin');
+    const totalAgentEl = document.getElementById('totalAgent');
+
     let editingId = null;
+    let allUsers = []; // Store all users for filtering
+    let activeFilter = 'all'; // Track active stats card filter
 
     /* ============================================================
-       LOAD ROLES, TEAM, POSITION
+       LOAD TEAMS & POSITIONS
     ============================================================ */
     async function loadTeamsAndPositions() {
-    try {
-        const res = await fetch('/api/options', {
-            headers: { "Accept": "application/json" }
-        });
+        try {
+            const res = await fetch('/api/options', {
+                headers: { "Accept": "application/json" }
+            });
 
-        const json = await res.json();
+            const json = await res.json();
 
-        if (!json.success) throw new Error("API options gagal");
+            if (!json.success) throw new Error("API options gagal");
 
-        const teams = json.data.team;
-        const positions = json.data.position;
+            const teams = json.data.team;
+            const positions = json.data.position;
 
-        // RESET
-        teamSelect.innerHTML = `<option value="">Pilih Team</option>`;
-        posSelect.innerHTML = `<option value="">Pilih Posisi</option>`;
+            teamSelect.innerHTML = `<option value="">Pilih Team</option>`;
+            posSelect.innerHTML = `<option value="">Pilih Posisi</option>`;
 
-        teams.forEach(t => {
-            teamSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-        });
+            teams.forEach(t => {
+                teamSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            });
 
-        positions.forEach(p => {
-            posSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-        });
+            positions.forEach(p => {
+                posSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+            });
 
-    } catch (err) {
-        console.error(err);
-        showNotification("Gagal memuat team / posisi", "error");
+        } catch (err) {
+            console.error(err);
+            showNotification("Gagal memuat team / posisi", "error");
+        }
     }
-}
 
     /* ============================================================
        LOAD USERS TABLE
@@ -251,9 +263,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const res = await fetch('/admin/kelola-user/data', {
                 headers: { 'Accept': 'application/json' }
             });
-            const users = await res.json();
+            allUsers = await res.json();
 
-            renderUsers(users);
+            updateStats();
+            applyFilters();
 
         } catch (err) {
             console.error(err);
@@ -261,12 +274,113 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    /* ============================================================
+       UPDATE STATS COUNTERS
+    ============================================================ */
+    function updateStats() {
+        const totalUsers = allUsers.length;
+        const totalAdmin = allUsers.filter(u => u.role === 'admin').length;
+        const totalAgent = allUsers.filter(u => u.role === 'agent').length;
+
+        // Animate counter
+        animateCounter(totalUsersEl, totalUsers);
+        animateCounter(totalAdminEl, totalAdmin);
+        animateCounter(totalAgentEl, totalAgent);
+    }
+
+    function animateCounter(element, targetValue) {
+        const currentValue = parseInt(element.textContent) || 0;
+        const increment = Math.ceil((targetValue - currentValue) / 10);
+        
+        let current = currentValue;
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= targetValue) || (increment < 0 && current <= targetValue)) {
+                element.textContent = targetValue;
+                clearInterval(timer);
+            } else {
+                element.textContent = current;
+            }
+        }, 30);
+    }
+
+    /* ============================================================
+       STATS CARD CLICK - FILTER BY ROLE
+    ============================================================ */
+    statsCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const filterType = this.dataset.filter;
+            
+            // Remove active state from all cards
+            statsCards.forEach(c => c.classList.remove('ring-2', 'ring-blue-500'));
+            
+            // Add active state to clicked card
+            this.classList.add('ring-2', 'ring-blue-500');
+            
+            // Set active filter
+            activeFilter = filterType;
+            
+            // Update role filter select
+            if (filterType === 'all') {
+                roleFilter.value = '';
+            } else if (filterType === 'admin') {
+                roleFilter.value = 'admin';
+            } else if (filterType === 'agent') {
+                roleFilter.value = 'agent';
+            }
+            
+            applyFilters();
+        });
+    });
+
+    /* ============================================================
+       APPLY ALL FILTERS
+    ============================================================ */
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const roleValue = roleFilter.value.toLowerCase();
+        const statusValue = statusFilter.value.toLowerCase();
+
+        let filteredUsers = allUsers.filter(user => {
+            // Search filter
+            const matchSearch = !searchTerm || 
+                user.name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.role.toLowerCase().includes(searchTerm);
+
+            // Role filter (from dropdown or stats card)
+            const matchRole = !roleValue || user.role.toLowerCase() === roleValue;
+
+            // Status filter
+            const matchStatus = !statusValue || user.status.toLowerCase() === statusValue;
+
+            return matchSearch && matchRole && matchStatus;
+        });
+
+        renderUsers(filteredUsers);
+    }
+
+    /* ============================================================
+       RENDER USERS TABLE
+    ============================================================ */
     function renderUsers(users) {
         userTableBody.innerHTML = '';
 
+        if (users.length === 0) {
+            userTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                        <i class="fas fa-users text-4xl mb-3"></i>
+                        <p>Tidak ada data user ditemukan</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
         users.forEach(user => {
             const row = document.createElement('tr');
-            row.classList.add('user-row');
+            row.classList.add('user-row', 'hover:bg-slate-800/30', 'transition-colors');
 
             row.dataset.id = user.id;
             row.dataset.role = user.role;
@@ -276,37 +390,86 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const initials = user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
 
+            // Status badge color
+            let statusBadge = '';
+            if (user.status === 'active') {
+                statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">Active</span>';
+            } else if (user.status === 'inactive') {
+                statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-slate-500/20 text-slate-400">Inactive</span>';
+            } else if (user.status === 'suspended') {
+                statusBadge = '<span class="px-2 py-1 rounded-full text-xs bg-red-500/20 text-red-400">Suspended</span>';
+            }
+
+            // Role badge color
+            let roleBadge = '';
+            if (user.role === 'admin') {
+                roleBadge = '<span class="px-2 py-1 rounded-full text-xs bg-purple-500/20 text-purple-400"><i class="fas fa-user-shield mr-1"></i>Admin</span>';
+            } else if (user.role === 'agent') {
+                roleBadge = '<span class="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400"><i class="fas fa-headset mr-1"></i>Agent</span>';
+            } else {
+                roleBadge = '<span class="px-2 py-1 rounded-full text-xs bg-blue-500/20 text-blue-400"><i class="fas fa-user mr-1"></i>User</span>';
+            }
+
             row.innerHTML = `
                 <td class="px-6 py-4">
-                    <input type="checkbox" class="row-checkbox" />
+                    <input type="checkbox" class="row-checkbox rounded border-slate-600 text-blue-500 focus:ring-blue-500" />
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-semibold">${initials}</div>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-semibold text-sm">${initials}</div>
                         <div>
                             <p class="text-sm font-medium user-name">${user.name}</p>
-                            <p class="text-xs text-slate-400">${user.role}</p>
+                            <p class="text-xs text-slate-400">ID: ${user.id}</p>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 user-email">${user.email}</td>
-                <td class="px-6 py-4">${user.role}</td>
-                <td class="px-6 py-4">${user.status}</td>
-                <td class="px-6 py-4">-</td>
-                <td class="px-6 py-4">${user.created_at}</td>
-
                 <td class="px-6 py-4">
-                    <button class="btn-edit text-green-500 mr-2" data-id="${user.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-delete text-red-500" data-id="${user.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <p class="text-sm user-email">${user.email}</p>
+                </td>
+                <td class="px-6 py-4">${roleBadge}</td>
+                <td class="px-6 py-4">${statusBadge}</td>
+                <td class="px-6 py-4 text-slate-400">-</td>
+                <td class="px-6 py-4">
+                    <p class="text-sm text-slate-400">${user.created_at}</p>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                        <button class="btn-edit p-2 hover:bg-green-500/20 text-green-500 rounded-lg transition-colors" data-id="${user.id}" title="Edit User">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete p-2 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors" data-id="${user.id}" title="Hapus User">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             `;
 
             userTableBody.appendChild(row);
         });
+    }
+
+    /* ============================================================
+       FILTER EVENT LISTENERS
+    ============================================================ */
+    searchInput.addEventListener('input', debounce(applyFilters, 300));
+    roleFilter.addEventListener('change', () => {
+        // Reset stats card active state when using dropdown
+        statsCards.forEach(c => c.classList.remove('ring-2', 'ring-blue-500'));
+        applyFilters();
+    });
+    statusFilter.addEventListener('change', applyFilters);
+
+    // Debounce function for search input
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     /* ============================================================
@@ -368,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        showNotification(editingId ? "User diperbarui" : "User ditambahkan", "success");
+        showNotification(editingId ? "User berhasil diperbarui" : "User berhasil ditambahkan", "success");
         modal.classList.add('hidden');
         loadUsers();
     });
@@ -416,6 +579,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 showNotification("User berhasil dihapus", "success");
                 loadUsers();
+            } else {
+                showNotification(data.message || "Gagal menghapus user", "error");
             }
         }
     });
@@ -425,22 +590,32 @@ document.addEventListener('DOMContentLoaded', function () {
     ============================================================ */
     function showNotification(msg, type = "info") {
         const box = document.createElement('div');
-        box.className = `fixed top-4 right-4 p-4 rounded text-white shadow-lg z-50 ${
+        box.className = `fixed top-4 right-4 p-4 rounded-lg text-white shadow-lg z-50 transition-all transform ${
             type === "success" ? "bg-green-500" :
             type === "error" ? "bg-red-500" : "bg-blue-500"
         }`;
 
-        box.innerHTML = msg;
+        box.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${msg}</span>
+            </div>
+        `;
 
         document.body.appendChild(box);
-        setTimeout(() => box.remove(), 3000);
+        
+        setTimeout(() => {
+            box.style.opacity = '0';
+            box.style.transform = 'translateX(100%)';
+            setTimeout(() => box.remove(), 300);
+        }, 3000);
     }
 
     /* ============================================================
        INIT LOAD
     ============================================================ */
     loadUsers();
-loadTeamsAndPositions();
+    loadTeamsAndPositions();
 
 });
 </script>

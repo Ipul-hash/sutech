@@ -133,6 +133,7 @@ Gunakan struktur berikut:
    - Wajib isi alasan pending / solusi saat resolved
 
 3. **Claim Ticket**
+   - Admin pilih team mana yang sesuai dengan tiket 
    - Agent klik tombol \"Ambil Tiket\"
    - Sistem assign ke agent tersebut
 
@@ -140,7 +141,7 @@ Gunakan struktur berikut:
    - Agent bisa update progres, status, dan upload file
 
 5. **Alur Ticket**
-   - open → in_progress → pending/resolved
+   - user buat tiket → admin pilih tim yang sesuai dengan permasalahan → agent tim terkait ambil → status berubah menjadi progress → selesai
 
 === ATURAN KHUSUS ===
 - Jika user bertanya \"cara\" → berikan langkah-langkah

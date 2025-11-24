@@ -500,89 +500,236 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // === MODAL: Detail (Perbarui untuk tampilkan position & ruangan) ===
-    async function openDetailModal(id) {
-        try {
-            const res = await fetch(`${API_URL}/${id}`);
-            const result = await res.json();
-            if (result.success) {
-                const t = result.data;
-                const statusColors = {
-                    open: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
-                    in_progress: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-                    resolved: 'bg-green-500/20 text-green-500 border-green-500/30',
-                    closed: 'bg-slate-500/20 text-slate-500 border-slate-500/30'
-                };
-                const priorityColors = {
-                    low: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-                    medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
-                    high: 'bg-orange-500/20 text-orange-500 border-orange-500/30',
-                    critical: 'bg-red-500/20 text-red-500 border-red-500/30'
-                };
+   // === MODAL: Detail Tiket (UPDATE dengan Ruangan & Position) ===
+async function openDetailModal(id) {
+    try {
+        const res = await fetch(`${API_URL}/${id}`);
+        const result = await res.json();
+        if (result.success) {
+            const t = result.data;
+            
+            // Status & Priority Colors
+            const statusColors = {
+                open: 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30',
+                in_progress: 'bg-blue-500/20 text-blue-500 border border-blue-500/30',
+                resolved: 'bg-green-500/20 text-green-500 border border-green-500/30',
+                closed: 'bg-slate-500/20 text-slate-500 border border-slate-500/30'
+            };
+            
+            const priorityColors = {
+                low: 'bg-blue-500/20 text-blue-500 border border-blue-500/30',
+                medium: 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30',
+                high: 'bg-orange-500/20 text-orange-500 border border-orange-500/30',
+                critical: 'bg-red-500/20 text-red-500 border border-red-500/30'
+            };
 
-                document.getElementById('detailTicketContent').innerHTML = `
-                    <div class="space-y-4">
+            // Status Icons
+            const statusIcons = {
+                open: 'fa-folder-open',
+                in_progress: 'fa-spinner',
+                resolved: 'fa-check-circle',
+                closed: 'fa-times-circle'
+            };
+
+            // Priority Icons
+            const priorityIcons = {
+                low: 'fa-arrow-down',
+                medium: 'fa-minus',
+                high: 'fa-arrow-up',
+                critical: 'fa-fire'
+            };
+
+            document.getElementById('detailTicketContent').innerHTML = `
+                <div class="space-y-4">
+                    <!-- ID Tiket -->
+                    <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <p class="text-xs text-slate-400 mb-1">ID Tiket</p>
+                        <p class="text-lg font-mono font-bold text-blue-400">#TKT-${t.id}</p>
+                    </div>
+
+                    <!-- Pelapor & Position (Side by Side) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                            <p class="text-xs text-slate-400 mb-1">ID Tiket</p>
-                            <p class="text-lg font-mono font-bold text-blue-400">#TKT-${t.id}</p>
-                        </div>
-                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                            <p class="text-xs text-slate-400 mb-2">Pelapor</p>
-                            <p class="font-semibold text-white">${t.user?.name || '-'}</p>
-                        </div>
-                        <!-- ✅ TAMPILKAN POSITION -->
-                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                            <p class="text-xs text-slate-400 mb-2">Sebagai</p>
-                            <p class="font-medium text-white">${t.position?.name || '-'}</p>
-                        </div>
-                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                            <p class="text-xs text-slate-400 mb-2">Judul</p>
-                            <p class="font-semibold text-white">${t.title}</p>
-                        </div>
-                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                            <p class="text-xs text-slate-400 mb-2">Deskripsi</p>
-                            <p class="text-sm text-slate-300">${t.description}</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                <p class="text-xs text-slate-400 mb-2">Kategori</p>
-                                <p class="font-medium text-white">${t.category}</p>
-                            </div>
-                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                <p class="text-xs text-slate-400 mb-2">Ruangan</p>
-                                <p class="font-medium text-white">${t.room?.name || '-'}</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                <p class="text-xs text-slate-400 mb-2">Status</p>
-                                <span class="inline-flex items-center px-3 py-1 ${statusColors[t.status]} border rounded-full text-xs font-semibold capitalize">
-                                    ${t.status.replace('_', ' ')}
-                                </span>
-                            </div>
-                            <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                <p class="text-xs text-slate-400 mb-2">Prioritas</p>
-                                <span class="inline-flex items-center px-3 py-1 ${priorityColors[t.priority]} border rounded-full text-xs font-semibold capitalize">
-                                    ${t.priority}
-                                </span>
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="fas fa-user mr-1"></i>Pelapor
+                            </p>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center font-bold text-sm">
+                                    ${(t.user?.name || 'NA').substring(0,2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-white">${t.user?.name || 'N/A'}</p>
+                                    <p class="text-xs text-slate-400">${t.user?.email || '-'}</p>
+                                </div>
                             </div>
                         </div>
+
                         <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                            <p class="text-xs text-slate-400 mb-2">Dibuat</p>
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="fas fa-id-badge mr-1"></i>Sebagai
+                            </p>
+                            <span class="inline-flex items-center px-3 py-1.5 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg text-sm font-medium">
+                                <i class="fas fa-briefcase mr-2"></i>
+                                ${t.position?.name || '-'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Judul -->
+                    <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <p class="text-xs text-slate-400 mb-2">
+                            <i class="fas fa-heading mr-1"></i>Judul
+                        </p>
+                        <p class="font-semibold text-white text-base">${t.title}</p>
+                    </div>
+
+                    <!-- Deskripsi -->
+                    <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <p class="text-xs text-slate-400 mb-2">
+                            <i class="fas fa-align-left mr-1"></i>Deskripsi
+                        </p>
+                        <p class="text-sm text-slate-300 leading-relaxed">${t.description || '-'}</p>
+                    </div>
+
+                    <!-- Kategori & Ruangan (Side by Side) -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="fas fa-tag mr-1"></i>Kategori
+                            </p>
+                            <span class="inline-flex items-center px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-xs font-semibold">
+                                ${t.category || '-'}
+                            </span>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="fas fa-map-marker-alt mr-1"></i>Ruangan
+                            </p>
+                            <span class="inline-flex items-center px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full text-xs font-semibold">
+                                <i class="fas fa-door-open mr-1"></i>
+                                ${t.room?.name || '-'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Status & Prioritas (Side by Side) -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="fas fa-tasks mr-1"></i>Status
+                            </p>
+                            <span class="inline-flex items-center px-3 py-1.5 ${statusColors[t.status]} rounded-full text-xs font-semibold capitalize">
+                                <i class="fas ${statusIcons[t.status]} mr-1.5"></i>
+                                ${t.status?.replace('_', ' ') || '-'}
+                            </span>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="fas fa-exclamation-circle mr-1"></i>Prioritas
+                            </p>
+                            <span class="inline-flex items-center px-3 py-1.5 ${priorityColors[t.priority]} rounded-full text-xs font-semibold capitalize">
+                                <i class="fas ${priorityIcons[t.priority]} mr-1.5"></i>
+                                ${t.priority || '-'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Tim Tujuan -->
+                    ${t.assigned_team ? `
+                    <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <p class="text-xs text-slate-400 mb-2">
+                            <i class="fas fa-users mr-1"></i>Tim Yang Menangani
+                        </p>
+                        <span class="inline-flex items-center px-3 py-1.5 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-sm font-medium">
+                            <i class="fas fa-user-friends mr-2"></i>
+                            ${t.assigned_team?.name || '-'}
+                        </span>
+                    </div>
+                    ` : ''}
+
+                    <!-- Agent yang Handle -->
+                    ${t.assigned_to ? `
+                    <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <p class="text-xs text-slate-400 mb-2">
+                            <i class="fas fa-user-tie mr-1"></i>Ditangani Oleh
+                        </p>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center font-bold text-xs">
+                                ${(t.agent?.name || 'NA').substring(0,2).toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-white">${t.agent?.name || 'N/A'}</p>
+                                <p class="text-xs text-slate-400">${t.agent?.email || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Waktu Dibuat & Update -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="far fa-calendar-plus mr-1"></i>Dibuat
+                            </p>
                             <p class="text-sm text-white">
-                                <i class="far fa-calendar-alt mr-2"></i>${new Date(t.created_at).toLocaleString('id-ID')}
+                                ${new Date(t.created_at).toLocaleString('id-ID', { 
+                                    weekday: 'short',
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </p>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2">
+                                <i class="far fa-calendar-check mr-1"></i>Terakhir Diupdate
+                            </p>
+                            <p class="text-sm text-white">
+                                ${new Date(t.updated_at).toLocaleString('id-ID', { 
+                                    weekday: 'short',
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
                             </p>
                         </div>
                     </div>
-                `;
-                document.getElementById('detailTicketModal').classList.remove('hidden');
-                document.getElementById('detailTicketModal').classList.add('flex');
-            }
-        } catch (err) {
-            showToast('Gagal muat detail: ' + err.message, 'error');
-        }
-    }
 
+                    <!-- Attachments (jika ada) -->
+                    ${t.attachments && t.attachments.length > 0 ? `
+                    <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <p class="text-xs text-slate-400 mb-3">
+                            <i class="fas fa-paperclip mr-1"></i>Lampiran (${t.attachments.length})
+                        </p>
+                        <div class="space-y-2">
+                            ${t.attachments.map(att => `
+                                <a href="${att.url}" target="_blank" class="flex items-center space-x-3 p-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors">
+                                    <i class="fas fa-file text-blue-400"></i>
+                                    <span class="text-sm text-white flex-1">${att.filename}</span>
+                                    <i class="fas fa-external-link-alt text-slate-400 text-xs"></i>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('detailTicketModal').classList.remove('hidden');
+            document.getElementById('detailTicketModal').classList.add('flex');
+        }
+    } catch (err) {
+        showToast('Gagal memuat detail: ' + err.message, 'error');
+        console.error('Error loading detail:', err);
+    }
+}
 
     // === LOAD TIKET ===
     async function loadTickets() {

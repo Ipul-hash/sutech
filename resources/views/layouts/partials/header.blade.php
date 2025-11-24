@@ -13,19 +13,7 @@
             <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
         </button>
         
-        <button class="p-2 rounded-lg hover:bg-slate-800 relative">
-            <i class="fas fa-search text-slate-400"></i>
-        </button>
-        
-        <button class="p-2 rounded-lg hover:bg-slate-800 relative">
-            <i class="fas fa-bell text-slate-400"></i>
-            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-        
-        <button class="p-2 rounded-lg hover:bg-slate-800 relative">
-            <i class="fas fa-envelope text-slate-400"></i>
-            <span class="absolute top-0 right-0 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
-        </button>
+      
         
         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center cursor-pointer">
             <span class="font-semibold">{{ strtoupper(substr(auth()->user()->name ?? 'SR', 0, 2)) }}</span>

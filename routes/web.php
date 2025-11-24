@@ -60,6 +60,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Tiket
         Route::get('/tiket', [AdminController::class, 'tiket'])->name('tiket.index');
+        Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring.index');
 
         // Kelola User (AJAX)
         Route::get('/kelola-user', [AdminController::class, 'kelolaUser'])->name('kelola-user.index');

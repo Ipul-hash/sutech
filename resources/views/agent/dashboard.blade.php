@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <p class="text-sm text-slate-400 mb-3 line-clamp-2">${t.description}</p>
                                 <div class="flex flex-wrap gap-3 text-xs text-slate-400">
                                     <span><i class="fas fa-tag mr-1"></i>${t.category}</span>
-                                    <span><i class="fas fa-map-marker-alt mr-1"></i>${t.location}</span>
+                                    <span><i class="fas fa-map-marker-alt mr-1"></i>${t.room?.name || '-'}  </span>
                                     <span><i class="far fa-clock mr-1"></i>${timeAgo} lalu</span>
                                 </div>
                             </div>
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                             <div class="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <p class="text-xs text-slate-400 mb-2">Lokasi</p>
-                                <p class="font-medium text-white">${t.location}</p>
+                                <p class="font-medium text-white">${t.room?.name || '-'}</p>
                             </div>
                         </div>
 

@@ -865,7 +865,7 @@ document.getElementById('selectedUserPositionId').value = positionId; // ✅ Set
             .catch(err => alert('Gagal muat detail: ' + err.message));
     }
 
-    // === EDIT MODAL ===
+// === EDIT MODAL - FIXED VERSION ===
 function openEditModal(id) {
     currentTicketId = id;
     fetch(`${API_BASE}/${id}`)
@@ -873,30 +873,42 @@ function openEditModal(id) {
         .then(data => {
             if (data.success) {
                 const t = data.data;
-                    document.getElementById('editTicketId').value = t.id;
-                    document.getElementById('editTitle').value = t.title;
-                    document.getElementById('editStatus').value = t.status;
-                    document.getElementById('editPriority').value = t.priority;
-                    document.getElementById('editDescription').value = t.description;
-                    document.getElementById('editDescription').value = t.description;
-                    document.getElementById('editTicketModal').classList.remove('hidden');
-                    document.getElementById('editTicketModal').classList.add('flex');
-
-                    fetch(OPTIONS_API)
+                
+                // Set basic fields
+                document.getElementById('editTicketId').value = t.id;
+                document.getElementById('editTitle').value = t.title;
+                document.getElementById('editStatus').value = t.status;
+                document.getElementById('editPriority').value = t.priority;
+                document.getElementById('editDescription').value = t.description;
+                
+                // Load teams dan set selected value
+                fetch(OPTIONS_API)
                     .then(res => res.json())
                     .then(options => {
-                        const teamSelect = document.getElementById('editAssignedTeamSelect');
-                        teamSelect.innerHTML = '<option value="">Pilih tim...</option>' + 
-                            options.data.team.map(team => 
-                                `<option value="${team.id}" ${team.id == t.assigned_team_id ? 'selected' : ''}>${team.name}</option>`
-                            ).join('');
+                        if (options.success) {
+                            const teamSelect = document.getElementById('editAssignedTeamSelect');
+                            teamSelect.innerHTML = '<option value="">Pilih tim...</option>' + 
+                                options.data.team.map(team => 
+                                    `<option value="${team.id}" ${team.id == t.assigned_team_id ? 'selected' : ''}>${team.name}</option>`
+                                ).join('');
+                        }
+                        
+                        // Show modal setelah semua data siap
                         document.getElementById('editTicketModal').classList.remove('hidden');
                         document.getElementById('editTicketModal').classList.add('flex');
+                    })
+                    .catch(err => {
+                        console.error('Error loading teams:', err);
+                        showToast('Gagal memuat daftar tim', 'error');
                     });
             }
         })
-        .catch(err => showToast('Gagal muat data edit: ' + err.message, 'error'));
+        .catch(err => {
+            console.error('Error loading ticket:', err);
+            showToast('Gagal memuat data tiket: ' + err.message, 'error');
+        });
 }
+
 
     // === DELETE MODAL ===
     function openDeleteConfirm(id) {
@@ -926,38 +938,73 @@ function openEditModal(id) {
         document.getElementById('deleteConfirmModal').classList.remove('flex');
     });
 
-    // === EDIT SUBMIT ===
-    document.getElementById('editTicketForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = {
-            title: document.getElementById('editTitle').value,
-            status: document.getElementById('editStatus').value,
-            priority: document.getElementById('editPriority').value,
-            description: document.getElementById('editDescription').value
-        };
-        try {
-            const res = await fetch(`${API_BASE}/${currentTicketId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if (result.success) {
-                showToast('✅ Tiket berhasil diperbarui!');
-                document.getElementById('editTicketModal').classList.add('hidden');
-                document.getElementById('editTicketModal').classList.remove('flex');
-                fetchTickets();
-            } else {
-                showToast('❌ Gagal: ' + (result.message || 'Error tidak diketahui'), 'error');
+    // === EDIT SUBMIT - FIXED VERSION ===
+document.getElementById('editTicketForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Ambil semua field yang diperlukan
+    const data = {
+        title: document.getElementById('editTitle').value.trim(),
+        status: document.getElementById('editStatus').value,
+        priority: document.getElementById('editPriority').value,
+        description: document.getElementById('editDescription').value.trim(),
+        assigned_team_id: document.getElementById('editAssignedTeamSelect').value
+    };
+    
+    // Validasi client-side
+    if (!data.title || data.title.length < 5) {
+        showToast('Judul minimal 5 karakter!', 'error');
+        return;
+    }
+    
+    if (!data.description || data.description.length < 20) {
+        showToast('Deskripsi minimal 20 karakter!', 'error');
+        return;
+    }
+    
+    if (!data.assigned_team_id) {
+        showToast('Pilih tim tujuan!', 'error');
+        return;
+    }
+    
+    console.log('Sending edit data:', data); // Debug log
+    
+    try {
+        const res = await fetch(`${API_BASE}/${currentTicketId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await res.json();
+        console.log('Edit response:', result); // Debug log
+        
+        if (result.success) {
+            showToast('✅ Tiket berhasil diperbarui!');
+            document.getElementById('editTicketModal').classList.add('hidden');
+            document.getElementById('editTicketModal').classList.remove('flex');
+            fetchTickets();
+        } else {
+            // Tampilkan error detail jika ada
+            let errorMsg = result.message || 'Gagal memperbarui tiket';
+            
+            // Jika ada validation errors
+            if (result.errors) {
+                errorMsg = Object.values(result.errors).flat().join(', ');
             }
-        } catch (err) {
-            showToast('❌ Error: ' + err.message, 'error');
+            
+            showToast('❌ ' + errorMsg, 'error');
         }
-    });
+    } catch (err) {
+        console.error('Edit error:', err);
+        showToast('❌ Error: ' + err.message, 'error');
+    }
+});
 
     // === DELETE CONFIRM ===
     document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {

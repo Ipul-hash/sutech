@@ -18,6 +18,11 @@ class AdminController extends Controller
         return view('admin.tiket');
     }
 
+    public function monitoring()
+    {
+        return view('monitoring.monitoring');
+    }
+
     public function kelolaUser()
     {
         $users = User::with(['roles', 'team', 'position'])->get();
